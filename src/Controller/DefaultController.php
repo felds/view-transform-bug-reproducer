@@ -9,7 +9,6 @@ use Symfony\Component\Form\DataTransformerInterface;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class DefaultController extends Controller
@@ -33,41 +32,40 @@ class DefaultController extends Controller
     }
 }
 
-class Model
+class User
 {
-    public $givenName;
+    private $name;
 
-    public $familyName;
+    public function __construct($name)
+    {
+        $this->name = strtoupper($name);
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
 }
 
 class ViewTransformer implements DataTransformerInterface
 {
     public function transform($value)
     {
-        dump(['transform', $value]);
-        if ($value instanceof Model) {
-            return [
-                'name' => trim(sprintf('%s %s',
-                    $value->givenName,
-                    $value->familyName
-                )),
-            ];
-        } else {
-            return ['name' => ""];
-        }
+        $out = ($value instanceof User)
+            ? ['name' => $value->getName()]
+            : ['name' => ""];
+
+        dump(['f' => 'transform', 'in' => $value, 'out' => $out]);
+
+        return $out;
     }
 
     public function reverseTransform($value)
     {
-        dump(['reverse transform', $value]);
-        $name = $value['name'];
-        $model = new Model();
+        $out = new User($value['name']);
 
-        if (preg_match('{^(?<given>\w+)\s(?<family>\w+)$}', $name, $matches)) {
-            $model->givenName = $matches['given'];
-            $model->familyName = strrev($matches['family']);
-        }
+        dump(['f' => 'reverse transform', 'in' => $value, 'out' => $out]);
 
-        return $model;
+        return $out;
     }
 }
